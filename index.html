@@ -571,7 +571,7 @@
 
             // --- Funzione per esportare in file .ics (Calendario) ---
             function exportToIcs(task) {
-                // Formatta la data e l'ora nel formato YYYYMMDDTHHMMSS per ICS
+                // Formatta la data e l'ora nel formato ICS (YYYYMMDDTHHMMSS)
                 const formatDate = (dateStr, timeStr) => {
                     const date = dateStr.replace(/-/g, ''); // YYYYMMDD
                     if (timeStr) {
@@ -588,38 +588,33 @@
                 if (task.time) {
                     // Per eventi con orario: l'evento dura 1 ora per impostazione predefinita
                     const startDateObj = new Date(`${task.date}T${task.time}`);
-                    startDateObj.setHours(startDateObj.getHours() + 1); // Aggiungi 1 ora per l'orario di fine
+                    startDateObj.setHours(startDateObj.getHours() + 1); // Add 1 hour for default end time
                     dateTimeEnd = formatDate(startDateObj.toISOString().slice(0, 10), startDateObj.toISOString().slice(11, 16));
                 } else {
                     // Per eventi di intera giornata: DTEND è il giorno successivo a DTSTART
                     const endDateObj = new Date(task.date);
-                    endDateObj.setDate(endDateObj.getDate() + 1); // Il giorno dopo la data dell'evento
+                    endDateObj.setDate(endDateObj.getDate() + 1); // The day after the event date
                     dateTimeEnd = formatDate(endDateObj.toISOString().slice(0, 10));
                 }
 
                 const uid = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-                // DTSTAMP deve essere in formato UTC (termina con 'Z') senza millisecondi
+                // DTSTAMP must be in UTC format (ends with 'Z') without milliseconds
                 const now = new Date().toISOString().replace(/[-:]|\.\d{3}/g, '') + 'Z'; 
 
-                // Contenuto del file ICS, con CRLF espliciti per ogni riga
-                // Ho semplificato il MIME type del blob a solo 'text/calendar' per Safari
+                // ICS content, with explicit CRLF for each line
                 const icsContent = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//OrganizzatoreGiornate//IT\r\nBEGIN:VEVENT\r\nUID:${uid}\r\nDTSTAMP:${now}\r\nDTSTART;VALUE=${valueType}:${dateTimeStart}\r\nDTEND;VALUE=${valueType}:${dateTimeEnd}\r\nSUMMARY:${task.description}\r\nDESCRIPTION:${task.description}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
 
-                const blob = new Blob([icsContent], { type: 'text/calendar' }); // Rimosso 'charset=utf-8;'
-                const url = URL.createObjectURL(blob);
+                // **NUOVA STRATEGIA PER SAFARI (DATA URI):**
+                // Codifica il contenuto ICS in Base64
+                const base64Content = btoa(unescape(encodeURIComponent(icsContent)));
+                // Crea un Data URI
+                const dataUri = `data:text/calendar;charset=utf-8;base64,${base64Content}`;
 
-                const a = document.createElement('a');
-                a.href = url;
-                // Nome del file ICS con data e descrizione abbreviata (permette spazi nel nome)
-                const filenameDate = task.date.replace(/-/g, '');
-                const filenameDesc = task.description.replace(/[^a-zA-Z0-9\s]/g, '').substring(0, 20).trim().replace(/\s+/g, '_'); 
-                a.download = `impegno_${filenameDate}_${filenameDesc}.ics`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                // Invece di creare un elemento 'a' e simulare il click, proviamo a navigare direttamente al Data URI
+                // Questo spesso funziona meglio in Safari per innescare l'apertura del calendario
+                window.location.href = dataUri;
 
-                showMessageModal('Evento Calendario Creato', 'Un file .ics è stato scaricato. Aprilo per aggiungerlo al tuo calendario/promemoria!');
+                showMessageModal('Evento Calendario Creato', 'Il tuo browser tenterà di aggiungere l\'evento al calendario. Segui le istruzioni sullo schermo.');
             }
 
             // --- Listener di Eventi ---
