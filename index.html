@@ -571,50 +571,48 @@
 
             // --- Funzione per esportare in file .ics (Calendario) ---
             function exportToIcs(task) {
-                const date = task.date.replace(/-/g, ''); // YYYYMMDD
-                const time = task.time ? task.time.replace(/:/g, '') + '00' : '000000'; // HHMMSS, o 000000 se non specificato
-                const dateTimeStart = task.time ? `${date}T${time}` : date; // Se c'è un orario, è un evento con orario, altrimenti è un evento di intera giornata
-                
-                // Per un evento che dura un'ora, o solo la data se senza orario
+                // Formatta la data e l'ora nel formato YYYYMMDDTHHMMSS per ICS
+                const formatDate = (dateStr, timeStr) => {
+                    const date = dateStr.replace(/-/g, ''); // YYYYMMDD
+                    if (timeStr) {
+                        const time = timeStr.replace(/:/g, '') + '00'; // HHMMSS
+                        return `${date}T${time}`;
+                    }
+                    return date; // Solo data per eventi all-day
+                };
+
+                const dateTimeStart = formatDate(task.date, task.time);
                 let dateTimeEnd = '';
+                let valueType = task.time ? 'DATE-TIME' : 'DATE';
+
                 if (task.time) {
+                    // Per eventi con orario: l'evento dura 1 ora per impostazione predefinita
                     const startDateObj = new Date(`${task.date}T${task.time}`);
-                    startDateObj.setHours(startDateObj.getHours() + 1); // Aggiungi 1 ora per l'orario di fine predefinito
-                    const endDate = startDateObj.toISOString().slice(0, 10).replace(/-/g, '');
-                    const endTime = startDateObj.toISOString().slice(11, 16).replace(/:/g, '') + '00';
-                    dateTimeEnd = `${endDate}T${endTime}`;
+                    startDateObj.setHours(startDateObj.getHours() + 1); // Aggiungi 1 ora per l'orario di fine
+                    dateTimeEnd = formatDate(startDateObj.toISOString().slice(0, 10), startDateObj.toISOString().slice(11, 16));
                 } else {
-                    // Per eventi di intera giornata, DTEND è la data successiva
+                    // Per eventi di intera giornata: DTEND è il giorno successivo a DTSTART
                     const endDateObj = new Date(task.date);
-                    endDateObj.setDate(endDateObj.getDate() + 1);
-                    dateTimeEnd = endDateObj.toISOString().slice(0, 10).replace(/-/g, '');
+                    endDateObj.setDate(endDateObj.getDate() + 1); // Il giorno dopo la data dell'evento
+                    dateTimeEnd = formatDate(endDateObj.toISOString().slice(0, 10));
                 }
 
-
                 const uid = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
-                const now = new Date().toISOString().replace(/[-:]|\.\d{3}/g, ''); // YYYYMMDDTHHMMSSZ
+                // DTSTAMP deve essere in formato UTC (termina con 'Z') senza millisecondi
+                const now = new Date().toISOString().replace(/[-:]|\.\d{3}/g, '') + 'Z'; 
 
-                const icsContent = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//OrganizzatoreGiornate//IT
-BEGIN:VEVENT
-UID:${uid}
-DTSTAMP:${now}
-DTSTART;VALUE=${task.time ? 'DATE-TIME' : 'DATE'}:${dateTimeStart}
-${task.time ? `DTEND;VALUE=DATE-TIME:${dateTimeEnd}` : `DTEND;VALUE=DATE:${dateTimeEnd}`}
-SUMMARY:${task.description}
-DESCRIPTION:${task.description}
-END:VEVENT
-END:VCALENDAR`;
+                // Contenuto del file ICS, con CRLF espliciti per ogni riga
+                // Ho semplificato il MIME type del blob a solo 'text/calendar' per Safari
+                const icsContent = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//OrganizzatoreGiornate//IT\r\nBEGIN:VEVENT\r\nUID:${uid}\r\nDTSTAMP:${now}\r\nDTSTART;VALUE=${valueType}:${dateTimeStart}\r\nDTEND;VALUE=${valueType}:${dateTimeEnd}\r\nSUMMARY:${task.description}\r\nDESCRIPTION:${task.description}\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n`;
 
-                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+                const blob = new Blob([icsContent], { type: 'text/calendar' }); // Rimosso 'charset=utf-8;'
                 const url = URL.createObjectURL(blob);
 
                 const a = document.createElement('a');
                 a.href = url;
-                // Nome del file ICS con data e descrizione abbreviata
+                // Nome del file ICS con data e descrizione abbreviata (permette spazi nel nome)
                 const filenameDate = task.date.replace(/-/g, '');
-                const filenameDesc = task.description.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20); // Pulisci e abbrevia
+                const filenameDesc = task.description.replace(/[^a-zA-Z0-9\s]/g, '').substring(0, 20).trim().replace(/\s+/g, '_'); 
                 a.download = `impegno_${filenameDate}_${filenameDesc}.ics`;
                 document.body.appendChild(a);
                 a.click();
