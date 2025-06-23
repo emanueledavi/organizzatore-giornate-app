@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizzatore Giornate</title>
+    <!-- Link al font Inter di Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Variabili CSS per colori e stili base */
+        :root {
+            --primary-color: #673AB7; /* Viola per pulsanti e accenti */
+            --primary-dark: #512DA8;
+            --secondary-color: #FFC107; /* Giallo per altri accenti */
+            --bg-color: #f8faff; /* Sfondo molto chiaro */
+            --card-bg: #ffffff; /* Sfondo schede/contenitori */
+            --text-color: #333;
+            --light-text: #666;
+            --border-color: #e0e0e0;
+            --shadow-light: rgba(0, 0, 0, 0.08);
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --border-radius: 10px; /* Bordi più arrotondati */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 25px var(--shadow-medium); /* Ombra più pronunciata */
+            width: 100%;
+            max-width: 700px; /* Larghezza massima ridotta per un focus centrale */
+            box-sizing: border-box;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 25px;
+            font-weight: 700; /* Più spesso */
+        }
+
+        .input-section {
+            display: grid;
+            grid-template-columns: 1fr; /* Default a una colonna su mobile */
+            gap: 15px; /* Spazio ridotto */
+            margin-bottom: 30px;
+            align-items: end;
+        }
+
+        @media (min-width: 600px) {
+            .input-section {
+                grid-template-columns: repeat(2, 1fr); /* Due colonne su desktop */
+            }
+            .form-group.full-width {
+                grid-column: span 2; /* Descrizione occupa tutta la larghezza */
+            }
+        }
+
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: var(--light-text);
+        }
+
+        .input-section input[type="date"],
+        .input-section input[type="time"],
+        .input-section input[type="text"] {
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px; /* Meno arrotondato degli angoli esterni */
+            font-size: 1em;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .input-section input[type="date"]:focus,
+        .input-section input[type="time"]:focus,
+        .input-section input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(103, 58, 183, 0.2); /* Ombra con colore principale */
+        }
+
+        .button-group {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .input-section button {
+            padding: 12px 25px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.05em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 10px rgba(103, 58, 183, 0.3);
+        }
+
+        .input-section button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(103, 58, 183, 0.4);
+        }
+
+        .input-section button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 5px rgba(103, 58, 183, 0.2);
+        }
+
+        .input-section button.cancel-btn {
+            background-color: #ccc;
+            box-shadow: none;
+        }
+        .input-section button.cancel-btn:hover {
+            background-color: #bbb;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .task-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column; /* Colonna per mobile */
+            gap: 10px;
+            box-shadow: 0 2px 8px var(--shadow-light);
+            transition: transform 0.2s ease;
+        }
+
+        .task-item:hover {
+            transform: translateY(-3px);
+        }
+
+        .task-info {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+        
+        @media (min-width: 600px) {
+            .task-item {
+                flex-direction: row; /* Riga per desktop */
+                justify-content: space-between;
+                align-items: center;
+            }
+            .task-info {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+        }
+
+
+        .task-details span {
+            display: block; /* Ogni dettaglio su nuova riga per mobile */
+            margin-bottom: 5px;
+            font-size: 0.95em;
+            color: var(--light-text);
+        }
+        .task-details strong {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .task-details .description {
+            font-size: 1em;
+            color: var(--primary-dark);
+            font-weight: 500;
+            margin-top: 5px; /* Spazio sopra la descrizione */
+        }
+        @media (min-width: 600px) {
+            .task-details span {
+                display: inline-block; /* Dettagli sulla stessa riga su desktop */
+                margin-right: 15px;
+                margin-bottom: 0;
+            }
+            .task-details .description {
+                margin-top: 0;
+                flex-basis: 100%; /* La descrizione occupa una riga intera */
+            }
+        }
+
+
+        .task-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end; /* Allinea a destra su mobile */
+        }
+        @media (min-width: 600px) {
+            .task-actions {
+                flex-shrink: 0; /* Non si restringe */
+            }
+        }
+
+        .task-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.4em; /* Icone più grandi */
+            transition: transform 0.2s ease;
+            padding: 8px; /* Aumenta l'area cliccabile */
+            border-radius: 5px;
+        }
+
+        .task-actions button:hover {
+            transform: scale(1.15);
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .task-actions .edit-btn {
+            color: var(--primary-color);
+        }
+
+        .task-actions .delete-btn {
+            color: #dc3545; /* Rosso */
+        }
+
+        /* Stili per il Modal di Messaggio/Conferma */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px var(--shadow-medium);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .modal-content p {
+            margin-bottom: 25px;
+            line-height: 1.6;
+            color: var(--text-color);
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .modal-buttons button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .modal-buttons .confirm-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .modal-buttons .confirm-btn:hover {
+            background-color: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .modal-buttons .cancel-modal-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .modal-buttons .cancel-modal-btn:hover {
+            background-color: #5a6268;
+            transform: translateY(-1px);
+        }
+        .modal-buttons .ok-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .modal-buttons .ok-btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .task-actions .add-to-calendar-btn {
+            color: var(--secondary-color); /* Giallo per aggiungere al calendario */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗓️ Organizzatore Giornate</h1>
+
+        <div class="input-section">
+            <div class="form-group">
+                <label for="taskDate">Data:</label>
+                <input type="date" id="taskDate" required>
+            </div>
+
+            <div class="form-group">
+                <label for="taskTime">Orario (Opzionale):</label>
+                <input type="time" id="taskTime">
+            </div>
+
+            <div class="form-group full-width">
+                <label for="taskDescription">Descrizione:</label>
+                <input type="text" id="taskDescription" placeholder="Es. Riunione con team, Appuntamento dal medico" required>
+            </div>
+
+            <div class="button-group">
+                <button id="addTaskBtn">Aggiungi Impegno</button>
+                <button id="cancelEditBtn" class="cancel-btn" style="display: none;">Annulla Modifica</button>
+            </div>
+        </div>
+
+        <h2>📋 I Miei Impegni</h2>
+        <ul id="taskList" class="task-list">
+            <!-- Gli impegni verranno aggiunti qui dal JavaScript -->
+        </ul>
+    </div>
+
+    <!-- Modali per messaggi e conferme -->
+    <div id="messageModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="messageModalTitle"></h3>
+            <p id="messageModalText"></p>
+            <div class="modal-buttons">
+                <button class="ok-btn" id="messageModalOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="confirmModalTitle">Conferma Azione</h3>
+            <p id="confirmModalText"></p>
+            <div class="modal-buttons">
+                <button class="confirm-btn" id="confirmModalYesBtn">Conferma</button>
+                <button class="cancel-modal-btn" id="confirmModalNoBtn">Annulla</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Riferimenti agli elementi DOM
+            const taskDateInput = document.getElementById('taskDate');
+            const taskTimeInput = document.getElementById('taskTime');
+            const taskDescriptionInput = document.getElementById('taskDescription');
+            const addTaskBtn = document.getElementById('addTaskBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            const taskList = document.getElementById('taskList');
+
+            // Riferimenti ai modali
+            const messageModalOverlay = document.getElementById('messageModalOverlay');
+            const messageModalTitle = document.getElementById('messageModalTitle');
+            const messageModalText = document.getElementById('messageModalText');
+            const messageModalOkBtn = document.getElementById('messageModalOkBtn');
+
+            const confirmModalOverlay = document.getElementById('confirmModalOverlay');
+            const confirmModalTitle = document.getElementById('confirmModalTitle');
+            const confirmModalText = document.getElementById('confirmModalText');
+            const confirmModalYesBtn = document.getElementById('confirmModalYesBtn');
+            const confirmModalNoBtn = document.getElementById('confirmModalNoBtn');
+
+            let tasks = []; // Array per memorizzare gli impegni
+            let editIndex = -1; // Variabile per tenere traccia dell'impegno in modifica (-1 se nessuno)
+
+            // --- Funzioni per i modali ---
+
+            /**
+             * Mostra un modal per messaggi informativi.
+             * @param {string} title - Il titolo del modal.
+             * @param {string} message - Il messaggio da visualizzare.
+             */
+            function showMessageModal(title, message) {
+                messageModalTitle.textContent = title;
+                messageModalText.textContent = message;
+                messageModalOverlay.classList.add('active');
+            }
+
+            /**
+             * Nasconde il modal informativo.
+             */
+            function hideMessageModal() {
+                messageModalOverlay.classList.remove('active');
+            }
+
+            /**
+             * Mostra un modal di conferma e restituisce una Promise.
+             * @param {string} title - Il titolo del modal di conferma.
+             * @param {string} message - Il messaggio di conferma.
+             * @returns {Promise<boolean>} - True se l'utente conferma, False altrimenti.
+             */
+            function showConfirmModal(title, message) {
+                return new Promise((resolve) => {
+                    confirmModalTitle.textContent = title;
+                    confirmModalText.textContent = message;
+                    confirmModalOverlay.classList.add('active');
+
+                    const onConfirm = () => {
+                        confirmModalOverlay.classList.remove('active');
+                        confirmModalYesBtn.removeEventListener('click', onConfirm);
+                        confirmModalNoBtn.removeEventListener('click', onCancel);
+                        resolve(true);
+                    };
+
+                    const onCancel = () => {
+                        confirmModalOverlay.classList.remove('active');
+                        confirmModalYesBtn.removeEventListener('click', onConfirm);
+                        confirmModalNoBtn.removeEventListener('click', onCancel);
+                        resolve(false);
+                    };
+
+                    confirmModalYesBtn.addEventListener('click', onConfirm);
+                    confirmModalNoBtn.addEventListener('click', onCancel);
+                });
+            }
+
+            // Aggiungi listener al pulsante OK del modal messaggio
+            messageModalOkBtn.addEventListener('click', hideMessageModal);
+
+            // --- Funzioni di gestione dati e UI ---
+
+            // Funzione per caricare gli impegni dal LocalStorage
+            function loadTasks() {
+                const storedTasks = localStorage.getItem('dailyOrganizerTasks');
+                if (storedTasks) {
+                    tasks = JSON.parse(storedTasks);
+                    // Ordina gli impegni per data e poi per orario
+                    tasks.sort((a, b) => {
+                        const dateA = new Date(`${a.date}T${a.time || '00:00'}`);
+                        const dateB = new Date(`${b.date}T${b.time || '00:00'}`);
+                        return dateA - dateB;
+                    });
+                }
+                renderTasks();
+            }
+
+            // Funzione per salvare gli impegni nel LocalStorage
+            function saveTasks() {
+                localStorage.setItem('dailyOrganizerTasks', JSON.stringify(tasks));
+            }
+
+            // Funzione per visualizzare gli impegni nella lista
+            function renderTasks() {
+                taskList.innerHTML = ''; // Pulisce la lista prima di renderizzare
+                if (tasks.length === 0) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<p style="text-align: center; color: var(--light-text); padding: 20px;">Nessun impegno in programma. Inizia ad aggiungerne uno!</p>`;
+                    taskList.appendChild(li);
+                    return;
+                }
+
+                tasks.forEach((task, index) => {
+                    const li = document.createElement('li');
+                    li.classList.add('task-item');
+                    li.dataset.index = index; // Aggiunge un data attribute per l'indice
+
+                    li.innerHTML = `
+                        <div class="task-info">
+                            <div class="task-details">
+                                <span><strong>Data:</strong> ${task.date}</span>
+                                <span><strong>Orario:</strong> ${task.time || 'N/A'}</span>
+                                <span class="description"><strong>Descrizione:</strong> ${task.description}</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="edit-btn" data-index="${index}" title="Modifica Impegno">✏️</button>
+                            <button class="delete-btn" data-index="${index}" title="Elimina Impegno">🗑️</button>
+                            <button class="add-to-calendar-btn" data-index="${index}" title="Aggiungi a Calendario">📅</button>
+                        </div>
+                    `;
+                    taskList.appendChild(li);
+                });
+            }
+
+            // Funzione per pulire il form
+            function clearForm() {
+                taskDateInput.value = '';
+                taskTimeInput.value = '';
+                taskDescriptionInput.value = '';
+                taskDateInput.valueAsDate = new Date(); // Imposta la data di oggi come predefinita
+            }
+
+            // Funzione per impostare il form per la modifica
+            function setFormForEdit(index) {
+                const taskToEdit = tasks[index];
+                taskDateInput.value = taskToEdit.date;
+                taskTimeInput.value = taskToEdit.time;
+                taskDescriptionInput.value = taskToEdit.description;
+
+                addTaskBtn.textContent = 'Salva Modifiche';
+                cancelEditBtn.style.display = 'inline-block';
+                editIndex = index; // Imposta l'indice della voce in modifica
+            }
+
+            // Funzione per annullare la modalità di modifica
+            function cancelEdit() {
+                clearForm();
+                addTaskBtn.textContent = 'Aggiungi Impegno';
+                cancelEditBtn.style.display = 'none';
+                editIndex = -1; // Resetta l'indice di modifica
+            }
+
+            // --- Funzione per esportare in file .ics (Calendario) ---
+            function exportToIcs(task) {
+                const date = task.date.replace(/-/g, ''); // YYYYMMDD
+                const time = task.time ? task.time.replace(/:/g, '') + '00' : '000000'; // HHMMSS, o 000000 se non specificato
+                const dateTimeStart = task.time ? `${date}T${time}` : date; // Se c'è un orario, è un evento con orario, altrimenti è un evento di intera giornata
+                
+                // Per un evento che dura un'ora, o solo la data se senza orario
+                let dateTimeEnd = '';
+                if (task.time) {
+                    const startDateObj = new Date(`${task.date}T${task.time}`);
+                    startDateObj.setHours(startDateObj.getHours() + 1); // Aggiungi 1 ora per l'orario di fine predefinito
+                    const endDate = startDateObj.toISOString().slice(0, 10).replace(/-/g, '');
+                    const endTime = startDateObj.toISOString().slice(11, 16).replace(/:/g, '') + '00';
+                    dateTimeEnd = `${endDate}T${endTime}`;
+                } else {
+                    // Per eventi di intera giornata, DTEND è la data successiva
+                    const endDateObj = new Date(task.date);
+                    endDateObj.setDate(endDateObj.getDate() + 1);
+                    dateTimeEnd = endDateObj.toISOString().slice(0, 10).replace(/-/g, '');
+                }
+
+
+                const uid = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+                const now = new Date().toISOString().replace(/[-:]|\.\d{3}/g, ''); // YYYYMMDDTHHMMSSZ
+
+                const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//OrganizzatoreGiornate//IT
+BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${now}
+DTSTART;VALUE=${task.time ? 'DATE-TIME' : 'DATE'}:${dateTimeStart}
+${task.time ? `DTEND;VALUE=DATE-TIME:${dateTimeEnd}` : `DTEND;VALUE=DATE:${dateTimeEnd}`}
+SUMMARY:${task.description}
+DESCRIPTION:${task.description}
+END:VEVENT
+END:VCALENDAR`;
+
+                const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                // Nome del file ICS con data e descrizione abbreviata
+                const filenameDate = task.date.replace(/-/g, '');
+                const filenameDesc = task.description.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 20); // Pulisci e abbrevia
+                a.download = `impegno_${filenameDate}_${filenameDesc}.ics`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showMessageModal('Evento Calendario Creato', 'Un file .ics è stato scaricato. Aprilo per aggiungerlo al tuo calendario/promemoria!');
+            }
+
+            // --- Listener di Eventi ---
+
+            // Listener per il pulsante Aggiungi/Salva Modifiche
+            addTaskBtn.addEventListener('click', () => {
+                const date = taskDateInput.value;
+                const time = taskTimeInput.value;
+                const description = taskDescriptionInput.value.trim();
+
+                if (!date || !description) {
+                    showMessageModal('Errore', 'Per favore, inserisci Data e Descrizione dell\'impegno.');
+                    return;
+                }
+
+                const newTask = {
+                    date,
+                    time,
+                    description
+                };
+
+                if (editIndex === -1) {
+                    // Aggiungi nuovo impegno
+                    tasks.push(newTask);
+                    showMessageModal('Successo', 'Impegno aggiunto con successo!');
+                } else {
+                    // Aggiorna impegno esistente
+                    tasks[editIndex] = newTask;
+                    showMessageModal('Successo', 'Impegno modificato con successo!');
+                    cancelEdit(); // Torna alla modalità di aggiunta dopo la modifica
+                }
+
+                saveTasks();
+                loadTasks(); // Ricarica per riordinare e renderizzare
+                clearForm();
+            });
+
+            // Listener per il pulsante Annulla Modifica
+            cancelEditBtn.addEventListener('click', cancelEdit);
+
+            // Listener per i pulsanti di modifica/eliminazione/aggiungi a calendario nella lista
+            taskList.addEventListener('click', async (event) => {
+                const target = event.target;
+                // Trova l'elemento <li> genitore per ottenere l'indice
+                const listItem = target.closest('.task-item');
+                if (!listItem) return; // Non è un pulsante di un task item
+
+                const index = parseInt(listItem.dataset.index);
+                const task = tasks[index]; // Ottieni l'impegno specifico
+
+                if (target.classList.contains('delete-btn')) {
+                    const confirmed = await showConfirmModal(
+                        'Conferma Eliminazione',
+                        'Sei sicuro di voler eliminare questo impegno?'
+                    );
+                    if (confirmed) {
+                        tasks.splice(index, 1); // Rimuove l'impegno dall'array
+                        saveTasks();
+                        loadTasks(); // Ricarica per riordinare e renderizzare
+                        showMessageModal('Eliminato', 'Impegno eliminato con successo.');
+                        if (editIndex === index) { // Se l'impegno eliminato era in modifica
+                            cancelEdit();
+                        }
+                    }
+                } else if (target.classList.contains('edit-btn')) {
+                    setFormForEdit(index); // Carica i dati nel form per la modifica
+                } else if (target.classList.contains('add-to-calendar-btn')) {
+                    exportToIcs(task); // Chiama la funzione per esportare l'impegno nel calendario
+                }
+            });
+
+            // --- Inizializzazione ---
+            loadTasks(); // Carica gli impegni all'avvio dell'applicazione
+            taskDateInput.valueAsDate = new Date(); // Imposta la data di oggi come predefinita
+        });
+    </script>
+</body>
+</html>
